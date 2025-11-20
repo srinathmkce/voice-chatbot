@@ -3,12 +3,16 @@ FastAPI backend for receiving audio and transcribing using Whisper.
 """
 import os
 import time
+import io
+import base64
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import whisper
 import tempfile
 import logging
-from agent import process_user_input
+from agent import process_user_input, generate_response_text
+from gtts import gTTS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -81,11 +85,37 @@ async def transcribe_audio(audio_file: UploadFile = File(...)):
         agent_result = process_user_input(transcript)
         logger.info(f"Agent processing completed: {agent_result.get('type', 'unknown')}")
         
+        # Generate human-like response text
+        logger.info("Generating response text...")
+        response_text = generate_response_text(agent_result)
+        logger.info(f"Generated response text: {response_text}")
+        
+        # Convert response text to speech
+        logger.info("Converting text to speech...")
+        audio_buffer = io.BytesIO()
+        try:
+            # Use gTTS to convert text to speech
+            tts = gTTS(text=response_text, lang='en', slow=False)
+            tts.write_to_fp(audio_buffer)
+            audio_buffer.seek(0)
+            audio_bytes = audio_buffer.read()
+            logger.info(f"Generated audio response: {len(audio_bytes)} bytes")
+        except Exception as e:
+            logger.error(f"TTS generation failed: {str(e)}")
+            audio_bytes = None
+        
+        # Convert audio to base64 for JSON response
+        audio_base64 = None
+        if audio_bytes:
+            audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
         return {
             "text": transcript,
             "language": result.get("language", "unknown"),
             "segments": result.get("segments", []),
-            "agent_result": agent_result
+            "agent_result": agent_result,
+            "response_text": response_text,
+            "audio_response": audio_base64  # Base64 encoded MP3 audio
         }
         
     except Exception as e:

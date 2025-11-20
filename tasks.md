@@ -31,3 +31,9 @@ At this point, when user voices an input and waits for 5 seconds,
  - if the intend is command, it will find the command and return it to the user
  - if the intend is add product, get the product information and return it
  - Show the command or product info in UI
+
+
+ ### Tasks 11
+Create a tool to identify the voice text which neeeds to be returned to the user. For example: When user gives a command "Open", the tool should return the text - "Running Open command". Similary for addnig the product, it should identify the text using openai. This step is to sound the respone more like a human. Along with the text, perform text to speech and play the text as audio in the UI. 
+
+At the end of this step, when user gives a command, the voice chatbot will talk back with the action. 

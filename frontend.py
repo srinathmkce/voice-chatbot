@@ -6,6 +6,7 @@ import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 import requests
 import time
+import base64
 
 # Page configuration
 st.set_page_config(
@@ -111,6 +112,25 @@ def main():
                         
                         st.divider()
                         st.markdown("### 🤖 Agent Result")
+                        
+                        # Get response text and audio
+                        response_text = result.get("response_text", "")
+                        audio_base64 = result.get("audio_response")
+                        
+                        # Display response text
+                        if response_text:
+                            st.markdown("### 🔊 Voice Response")
+                            st.info(f"**{response_text}**")
+                            
+                            # Play audio if available
+                            if audio_base64:
+                                try:
+                                    # Decode base64 audio
+                                    audio_bytes = base64.b64decode(audio_base64)
+                                    st.audio(audio_bytes, format="audio/mpeg", autoplay=True)
+                                    st.success("✅ Voice response generated and playing!")
+                                except Exception as e:
+                                    st.warning(f"Could not play audio: {str(e)}")
                         
                         if result_type == "command":
                             command = agent_result.get("command", "")
